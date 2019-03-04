@@ -1,0 +1,231 @@
+---
+output:
+  word_document: default
+  html_document: default
+---
+
+
+## S19 BAN502 Course Project Part 1 
+## Data Exploration, Preparation and Visualization
+### Michael Duncan
+
+
+libraries
+```{r}
+options(tidyverse.quiet = TRUE)
+library(tidyverse)
+library(psych) # For Descriptive Statistics
+library(mice) #package for imputation
+library(VIM) #visualizing missingness
+library(ggcorrplot)
+library(GGally)
+```
+Read Rain Data Set
+```{r}
+rain <- read_csv("rain.csv")
+glimpse(rain)
+
+```
+
+Convert to factors
+```{r}
+#updated all character variables to factors
+#note when imputating discoverd that R does not like character values at all. 
+rain2 <- rain %>%
+  mutate(RainToday = as_factor(as.character(RainToday))) %>%
+  mutate(RainTomorrow = as_factor(as.character(RainTomorrow))) %>%
+  mutate(WindGustDir = as_factor(as.character(WindGustDir))) %>%
+  mutate(WindDir9am = as_factor(as.character(WindDir9am))) %>%
+  mutate(WindDir3pm = as_factor(as.character(WindDir3pm)))
+glimpse(rain2)
+```
+
+Summary
+```{r}
+summary(rain2)
+```
+
+View missingness  
+```{r}
+vim_plot = aggr(rain2, numbers = TRUE, prop = c(TRUE, FALSE),cex.axis=.7)
+#the cex.axis reduces size of text on x-axis so labels fit better
+```
+
+imputation  
+```{r}
+#select only variables relevant to our analysis
+#Chose all variables because they could all have some level of predictive power
+rain2 = rain2 %>% select(c("Date","MinTemp", "MaxTemp", "Rainfall", "WindGustDir", "WindGustSpeed", "WindDir9am", "WindDir3pm", "WindSpeed9am", "WindSpeed3pm", "Humidity9am", "Humidity3pm","Pressure9am", "Pressure3pm", "Cloud9am", "Cloud3pm", "Temp9am", "Temp3pm", "RainToday", "RainTomorrow"))
+
+imp_testtest = mice(rain2, m=1, method='pmm', printFlag=FALSE)
+summary(imp_testtest)
+```
+
+
+```{r}
+densityplot(imp_testtest, ~MinTemp) #red imputed, blue original
+densityplot(imp_testtest, ~MaxTemp) #red imputed, blue original
+densityplot(imp_testtest, ~Rainfall) #red imputed, blue original
+densityplot(imp_testtest, ~WindGustDir) #red imputed, blue original
+densityplot(imp_testtest, ~WindGustSpeed) #red imputed, blue original
+densityplot(imp_testtest, ~WindDir9am) #red imputed, blue original
+densityplot(imp_testtest, ~WindDir3pm) #red imputed, blue original
+densityplot(imp_testtest, ~WindSpeed9am) #red imputed, blue original
+densityplot(imp_testtest, ~WindSpeed3pm) #red imputed, blue original
+densityplot(imp_testtest, ~Humidity9am) #red imputed, blue original
+densityplot(imp_testtest, ~Humidity3pm) #red imputed, blue original
+densityplot(imp_testtest, ~Pressure9am) #red imputed, blue original
+densityplot(imp_testtest, ~Pressure3pm) #red imputed, blue original
+densityplot(imp_testtest, ~Cloud9am) #red imputed, blue original
+densityplot(imp_testtest, ~Cloud3pm) #red imputed, blue original
+densityplot(imp_testtest, ~Temp9am) #red imputed, blue original
+densityplot(imp_testtest, ~Temp3pm) #red imputed, blue original
+densityplot(imp_testtest, ~RainToday) #red imputed, blue original
+
+
+
+
+
+```
+Merge the imputed values into our rain2 data frame  
+```{r}
+rain3 <- complete(imp_testtest) 
+summary(rain3)
+glimpse(rain3)
+```
+
+View missingness  of updated data frame rain3
+```{r}
+vim_plot = aggr(rain3, numbers = TRUE, prop = c(TRUE, FALSE),cex.axis=.7)
+#the cex.axis reduces size of text on x-axis so labels fit better
+```
+
+
+
+###Looking for Outliers
+
+Visualization Quantitative Variables --- Histograms
+```{r}
+ggplot(rain3, aes(x=MinTemp )) + geom_histogram() + theme_bw()
+describe(rain$MinTemp) # From Psych package to give summary statistics
+```
+
+```{r}
+ggplot(rain3, aes(x=MaxTemp )) + geom_histogram() + theme_bw()
+describe(rain$MaxTemp) # From Psych package to give summary statistics
+```
+
+
+```{r}
+ggplot(rain3, aes(x=Rainfall )) + geom_histogram() + theme_bw()
+describe(rain$Rainfall)
+```
+
+```{r}
+#rain4 <- rain3 %>% filter(Rainfall < 36) ## Testing this removes aroun 1.1% of the data This is 3 SDev of the mean
+#ggplot(rain4, aes(x=Rainfall)) + geom_histogram()
+#summary(rain4)
+#sd(rain3$Rainfall)
+#describe(rain$Rainfall) # From Psych package to give summary statistics
+```
+
+
+
+
+
+```{r}
+ggplot(rain3, aes(x=WindGustSpeed )) + geom_histogram() + theme_bw()
+describe(rain3$WindGustSpeed)
+```
+
+```{r}
+ggplot(rain3, aes(x=WindSpeed9am )) + geom_histogram() + theme_bw()
+describe(rain3$WindSpeed9am)
+```
+
+```{r}
+ggplot(rain3, aes(x=WindSpeed3pm )) + geom_histogram() + theme_bw()
+describe(rain3$WindSpeed3pm)
+```
+
+```{r}
+ggplot(rain3, aes(x=Humidity9am )) + geom_histogram() + theme_bw()
+
+```
+
+```{r}
+ggplot(rain3, aes(x=Humidity3pm )) + geom_histogram() + theme_bw()
+
+```
+
+```{r}
+ggplot(rain3, aes(x=Pressure9am )) + geom_histogram() + theme_bw()
+describe(rain3$Pressure9am)
+```
+
+```{r}
+ggplot(rain3, aes(x=Pressure3pm )) + geom_histogram() + theme_bw()
+describe(rain3$Pressure3pm)
+```
+
+```{r}
+ggplot(rain3, aes(x=Cloud9am )) + geom_histogram() + theme_bw()
+
+```
+
+```{r}
+ggplot(rain3, aes(x=Cloud3pm )) + geom_histogram() + theme_bw()
+
+```
+
+```{r}
+ggplot(rain3, aes(x=Temp9am )) + geom_histogram() + theme_bw()
+describe(rain3$Temp9am)
+```
+
+```{r}
+ggplot(rain3, aes(x=Temp3pm )) + geom_histogram() + theme_bw()
+```
+
+### Visualizations
+
+Visualizations Quantatitive Variables --- Box Plots
+```{r}
+ggplot(rain3, aes(x=RainTomorrow, y= MinTemp)) + geom_boxplot() + theme_bw()
+ggplot(rain3, aes(x=RainTomorrow, y= MaxTemp)) + geom_boxplot() + theme_bw()
+ggplot(rain3, aes(x=RainTomorrow, y= Rainfall)) + geom_boxplot() + theme_bw()
+ggplot(rain3, aes(x=RainTomorrow, y= WindGustSpeed)) + geom_boxplot() + theme_bw()
+ggplot(rain3, aes(x=RainTomorrow, y= WindSpeed9am)) + geom_boxplot() + theme_bw()
+ggplot(rain3, aes(x=RainTomorrow, y= WindSpeed3pm)) + geom_boxplot() + theme_bw()
+ggplot(rain3, aes(x=RainTomorrow, y= Humidity9am)) + geom_boxplot() + theme_bw()
+ggplot(rain3, aes(x=RainTomorrow, y= Humidity3pm)) + geom_boxplot() + theme_bw()
+ggplot(rain3, aes(x=RainTomorrow, y= Pressure9am)) + geom_boxplot() + theme_bw()
+ggplot(rain3, aes(x=RainTomorrow, y= Pressure3pm)) + geom_boxplot() + theme_bw()
+ggplot(rain3, aes(x=RainTomorrow, y= Cloud9am)) + geom_boxplot() + theme_bw()
+ggplot(rain3, aes(x=RainTomorrow, y= Cloud3pm)) + geom_boxplot() + theme_bw()
+ggplot(rain3, aes(x=RainTomorrow, y= Temp9am)) + geom_boxplot() + theme_bw()
+ggplot(rain3, aes(x=RainTomorrow, y= Temp3pm)) + geom_boxplot() + theme_bw()
+
+
+```
+
+```{r}
+ggplot(rain3, aes(x=RainTomorrow, y= Cloud3pm)) + geom_boxplot() + theme_bw()
+ggsave("Cloud3pm.png")
+```
+
+
+
+
+Visualizations of Categorical Variables
+```{r}
+ggplot(rain3, aes(x=RainToday, fill = RainTomorrow)) + geom_bar(position ="fill") + theme_bw()
+ggplot(rain3, aes(x=WindGustDir, fill = RainTomorrow)) + geom_bar(position ="fill") + theme_bw()
+ggplot(rain3, aes(x=WindDir9am, fill = RainTomorrow)) + geom_bar(position ="fill") + theme_bw()
+ggplot(rain3, aes(x=WindDir3pm, fill = RainTomorrow)) + geom_bar(position ="fill") + theme_bw()
+```
+
+
+
+
+
